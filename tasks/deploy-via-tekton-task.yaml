@@ -1,0 +1,65 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: deploy-ace-server
+  namespace: ace
+spec:
+  params:
+    - default: dev
+      description: >-
+        Specfiy the current environment. It is used in computing the Helm
+        release name.
+      name: env
+      type: string
+    - default: 'false'
+      description: >-
+        Specifies if the deployment is production-like with High Availability
+        enabled. Default [false]
+      name: production
+      type: string
+    - default: ace
+      description: Specify the name of the project being built.
+      name: project
+      type: string
+    - default: ''
+      description: Docker image version for the BAR file
+      name: buildversion
+      type: string
+  resources:
+    inputs:
+      - name: source
+        type: git
+      - name: image
+        type: image
+  steps:
+    - args:
+        - '-c'
+        - >
+          set -eu;
+          echo "Initializing helm";
+
+          sh utils/helm-init.sh;
+
+          echo "Running install.sh";
+
+          sh utils/helm-install.sh;
+      command:
+        - /bin/sh
+      env:
+        - name: STORAGE_FILE
+          valueFrom:
+            secretKeyRef:
+              key: fileStorage
+              name: common-settings
+        - name: PRODUCTION
+          value: $(inputs.params.production)
+        - name: ENV
+          value: $(inputs.params.env)
+        - name: IMAGE
+          value: '$(inputs.resources.image.url):$(inputs.params.buildversion)'
+        - name: ACE_PROJECT
+          value: $(inputs.params.project)
+      image: docker.io/rsundara/cp4i-setup
+      name: install-instance
+      resources: {}
+      workingDir: /workspace/source

@@ -1,0 +1,52 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: deploy-ace-server
+  namespace: ace
+spec:
+  params:
+    - default: ace
+      description: Specify the name of the project being built.
+      name: project
+      type: string
+    - default: ''
+      description: Docker image version for the BAR file
+      name: buildversion
+      type: string
+    - default: dev
+      description: File storage class
+      name: env
+      type: string
+    - default: 'false'
+      description: >-
+        Specifies if the deployment is production-like with High Availability
+        enabled. Default [false]
+      name: production
+      type: string
+  resources:
+    - name: source
+      type: git
+    - name: image
+      type: image
+  tasks:
+    - name: deploy-ace-server
+      params:
+        - name: production
+          value: $(params.production)
+        - name: env
+          value: $(params.env)
+        - name: integrationComponent
+          value: ace-server
+        - name: project
+          value: $(params.project)
+        - name: buildversion
+          value: $(params.buildversion)
+      resources:
+        inputs:
+          - name: source
+            resource: source
+          - name: image
+            resource: image
+      taskRef:
+        kind: Task
+        name: deploy-ace-server
