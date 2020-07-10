@@ -1,7 +1,14 @@
 #!/bin/bash
 printf "\n
 ----------------------------------------------------------------------------------------------------------------------------------------
-\n 1. Creating snapshot \n
+\n 1. Creating component \n
+----------------------------------------------------------------------------------------------------------------------------------------\n"
+
+curl -k -u "${UCD_USER}":"${UCD_PASSWORD}" "${UCD_URL}:${UCD_PORT}/cli/version/createVersion?component=${COMPONENT_NAME}&name=${COMPONENT_VERSION}" -X POST
+
+printf "\n
+----------------------------------------------------------------------------------------------------------------------------------------
+\n 2. Creating snapshot \n
 ----------------------------------------------------------------------------------------------------------------------------------------\n"
 
 printf "\n ./snapshot.json contents:\n"
@@ -12,14 +19,14 @@ printf "{
   \"versions\": [{
     \"%s\": \"%s\"
   }]
-}" "${SNAPSHOT_ID}" "${APPLICATION_NAME}" "${SNAPSHOT_VERSION_NAME}" "${SNAPSHOT_VERSION}" | tee ./snapshot.json
+}" "${SNAPSHOT_ID}" "${APPLICATION_NAME}" "${COMPONENT_NAME}" "${COMPONENT_VERSION}" | tee ./snapshot.json
 
 printf "\n"
 curl -k -u "${UCD_USER}":"${UCD_PASSWORD}" "${UCD_URL}:${UCD_PORT}/cli/snapshot/createSnapshot" -X PUT --data @snapshot.json
 
 printf "\n \n \n
 ----------------------------------------------------------------------------------------------------------------------------------------
-\n 2. Creating json file with application json \n
+\n 3. Creating json file with application json \n
 ----------------------------------------------------------------------------------------------------------------------------------------\n"
 
 printf "{
@@ -32,7 +39,7 @@ printf "{
 
 printf "\n \n
 ----------------------------------------------------------------------------------------------------------------------------------------
-\n 3. Requesting deployment from snapshot \n
+\n 4. Requesting deployment from snapshot \n
 ----------------------------------------------------------------------------------------------------------------------------------------\n"
 printf "Output from 'curl -k -u %s:%s %s:%s/cli/applicationProcessRequest/request -X PUT -d @deployment.json': ", "${UCD_USER}" "${UCD_PASSWORD}" "${UCD_URL}" "${UCD_PORT}"
 
